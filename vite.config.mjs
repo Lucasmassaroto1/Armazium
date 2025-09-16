@@ -19,4 +19,13 @@ export default defineConfig({
     }),
     react(),
   ],
+  server: {
+    host: true,       // aceita 0.0.0.0 dentro do container
+    port: 5173,
+    strictPort: true,
+    hmr: {
+      host: 'localhost', // para o navegador acessar via host
+      port: 5173,
+    },
+  },
 })
