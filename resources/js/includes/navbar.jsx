@@ -1,4 +1,5 @@
 import React from 'react';
+import '../../css/header.css';
 
 export default function Navbar(){
   async function handleLogout(e) {
@@ -7,7 +8,7 @@ export default function Navbar(){
     try {
       await fetch("/logout", {
         method: "POST",
-        credentials: "same-origin", // se front e back no mesmo domínio/porta
+        credentials: "same-origin",
         headers: {
           "X-CSRF-TOKEN": document
             .querySelector('meta[name="csrf-token"]')

@@ -12,7 +12,7 @@ use App\Models\Client;
 
 class SaleController extends Controller{
   public function index(Request $request){
-    $date = $request->query('date'); // YYYY-MM-DD
+    /* $date = $request->query('date'); // YYYY-MM-DD
     
     $query = Sale::query()
       ->with('client')
@@ -47,6 +47,46 @@ class SaleController extends Controller{
           'created_at' => optional($s->created_at)?->format('d/m/Y H:i'),
         ];
       });
+
+    return response()->json([
+      'data' => $items,
+      'meta' => ['paid_total' => (float) $paidTotal],
+    ]); */
+
+    $date = $request->query('date');
+    $all  = $request->boolean('all');
+
+    $query = Sale::query()
+      ->with('client')
+      ->where('representative_id', auth()->id());
+
+    if(!$all){
+      if($date){
+        $query->where(function ($q) use ($date){
+          $q->whereDate('sold_at', $date)
+            ->orWhereDate('created_at', $date);
+        });
+      }else{
+        $today = now()->toDateString();
+        $query->where(function ($q) use ($today){
+          $q->whereDate('sold_at', $today)
+            ->orWhereDate('created_at', $today);
+        });
+      }
+    }
+
+    $items = $query->orderByDesc('id')->get()->map(function ($s){
+      return[
+        'id' => $s->id,
+        'client' => optional($s->client)->name,
+        'total' => (float) $s->total_amount,
+        'status' => $s->status,
+        'created_at' => optional($s->created_at)?->format('d/m/Y H:i'),
+        // 'sold_at'   => optional($s->sold_at ?? $s->created_at)?->format('d/m/Y'),
+      ];
+    });
+
+    $paidTotal = (clone $query)->where('status', 'paid')->sum('total_amount');
 
     return response()->json([
       'data' => $items,

@@ -10,6 +10,7 @@ function Sales(){
   const [err, setErr] = useState("");
 
   const [paidTotal, setPaidTotal] = useState(0);
+  const [showAll, setShowAll] = useState(false);
 
   // ===== modal state =====
   const [mode, setMode] = useState("create"); // "create" | "show"
@@ -32,7 +33,7 @@ function Sales(){
   const [viewSale, setViewSale] = useState(null); // {id, client, status, sold_at, total}
   const [viewItems, setViewItems] = useState([]); // itens da venda
 
-  async function load() {
+  async function load(){
     setLoading(true);
     setErr("");
     try {
@@ -41,12 +42,33 @@ function Sales(){
       const data = await res.json();
       setRows(Array.isArray(data?.data) ? data.data : []);
       setPaidTotal(Number(data?.meta?.paid_total ?? 0));
+      setShowAll(false);
     } catch(e) {
       setErr("Não foi possível carregar as vendas.");
       setRows([]);
       setPaidTotal(0);
       console.log(e);
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function exibitudo(){
+    setLoading(true);
+    setErr("");
+    try{
+      const res = await fetch(`/sales/list?all=1`, { headers: { Accept:'application/json' }});
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setRows(Array.isArray(data?.data) ? data.data : []);
+      setPaidTotal(Number(data?.meta?.paid_total ?? 0));
+      setShowAll(true); // modo "tudo"
+    }catch(e){
+      console.log(e);
+      setErr("Não foi possível carregar todas as vendas.");
+      setRows([]);
+      setPaidTotal(0);
+    }finally{
       setLoading(false);
     }
   }
@@ -121,9 +143,10 @@ function Sales(){
               <div style={{marginTop:12, display:'flex', gap:8, alignItems:'center'}}>
                 <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
                 <button className="btn" onClick={load}>Filtrar</button>
-                <div className="badge">Total pago do dia: R$ {totalDia.toFixed(2).replace('.',',')}</div>
+                <button className="btn" onClick={exibitudo}>Exibir tudo</button>
               </div>
             </div>
+            <div className="badge">Total pago do dia: R$ {totalDia.toFixed(2).replace('.',',')}</div>
             <a className="btn" href="#sale-modal" onClick={openModalNovaVenda}>+ Nova venda</a>
           </div>
 
@@ -132,7 +155,7 @@ function Sales(){
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>#</th><th>Cliente</th><th>Total</th><th>Status</th><th>Data</th><th></th></tr>
+                <tr><th>#</th><th>Cliente</th><th>Total</th><th>Status</th><th>Data</th></tr>
               </thead>
               <tbody>
                 {loading ? (
@@ -264,7 +287,7 @@ function Sales(){
                     <input type="hidden" name="_token" value={window.csrfToken}/>
                     <input type="hidden" name="_method" value="PUT"/>
                     <label htmlFor="new_status" style={{ fontWeight: 600 }}>status:</label>
-                    <select id="new_status" name="status" defaultValue={viewSale.status}>
+                    <select id="new_status" name="status" defaultValue={viewSale.status} style={{ width: 120 }}>
                       <option value="open">Pendente</option>
                       <option value="paid">Pago</option>
                       <option value="canceled">Cancelado</option>
