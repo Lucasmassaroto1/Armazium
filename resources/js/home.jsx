@@ -5,6 +5,7 @@ import "../css/home.css";
 function Home(){
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [user, setUser] = useState(null);
 
   const [metrics, setMetrics] = useState({
     salesToday: 0,
@@ -63,6 +64,9 @@ function Home(){
       <main className="container">
         <div className="title-row">
           <h1>Dashboard</h1>
+          <div className="muted" style={{ marginLeft: 12 }}>
+            {user ? `Bem-vindo(a), ${user.name}` : '...'}
+          </div>
         </div>
 
         {error && <div className="alert">{error}</div>}

@@ -279,7 +279,7 @@ function Sales(){
             ) : (
               <>
                 <h2 className="modal__title">Detalhes da venda #{viewSale?.id ?? ""}</h2>
-                <p className="modal__desc">Cliente: <b>{viewSale?.client ?? "-"}</b> &nbsp;•&nbsp; Status: <b>{viewSale?.status}</b> &nbsp;•&nbsp; Data: <b>{viewSale?.sold_at}</b></p>
+                <p className="modal__desc">Cliente: <b>{viewSale?.client ?? "-"}</b> &nbsp;•&nbsp; Status: <b>{viewSale?.status}</b> &nbsp;•&nbsp; Data: <b>{viewSale?.sold_at}</b> Vendedor: <b></b></p>
 
                 {/* Form para mudar o status */}
                 {viewSale?.id && (

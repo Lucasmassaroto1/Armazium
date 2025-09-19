@@ -42,6 +42,7 @@ function Clients(){
       email: c.email ?? "",
       phone: c.phone ?? "",
       notes: c.notes ?? "",
+      is_system: !!c.is_system,
     });
   }
   const setField = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
@@ -62,7 +63,7 @@ function Clients(){
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Nome</th><th>Email</th><th>Telefone</th><th></th></tr>
+                <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Observações</th></tr>
               </thead>
               <tbody>
                 {loading ? (
@@ -74,6 +75,7 @@ function Clients(){
                     <td>{c.name}</td>
                     <td className="muted">{c.email || '-'}</td>
                     <td>{c.phone || '-'}</td>
+                    <td>{c.notes || '-'}</td>
                     <td className="action">
                       <a className="link" href="#novo-cliente" onClick={() => startEdit(c)}>Editar</a>
                     </td>
@@ -124,7 +126,7 @@ function Clients(){
 
               <div className="form__actions">
                 {/* Form EXCLUIR aparece só em modo edição */}
-                {mode === "edit" && (
+                {mode === "edit" && !form.is_system &&(
                   <form method="post" action={`/clients/${editingId}`} onSubmit={(e)=>{ if(!confirm("Tem certeza que deseja excluir este cliente?")) e.preventDefault(); }}>
                     <input type="hidden" name="_token" value={window.csrfToken}/>
                     <input type="hidden" name="_method" value="DELETE"/>
