@@ -6,7 +6,6 @@ function Home(){
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-
   const [metrics, setMetrics] = useState({
     salesToday: 0,
     repairsToday: 0,
@@ -81,7 +80,7 @@ function Home(){
             <div className="card-label">Manutenções (hoje)</div>
             <div className="card-value">{loading ? "..." : metrics.repairsToday}</div>
             {metrics.repairsToday > 0 && (
-              <a className={`card-link ${metrics.repairsToday > 0 ? "success" : "danger"}`} href="/sales?f=low">Detalhes</a>
+              <a className={`card-link ${metrics.repairsToday > 0 ? "success" : "danger"}`} href="/repairs?f=low">Detalhes</a>
             )}
           </div>
 

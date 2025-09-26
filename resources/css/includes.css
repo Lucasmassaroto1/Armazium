@@ -1,27 +1,70 @@
-/*
-  =========== ESTILO DO HEADER ===========
-*/
+/* =======================================
+  VARS BÁSICAS (mantém compatibilidade)
+======================================= */
+:root{
+  --bg1:#0f172a;
+  --bg2:#111827;
+  --card:#1f2937;
+  --muted:#94a3b8;
+  --text:#e5e7eb;
+  --primary:#6366f1;
+  --primary-2:#4f46e5;
+  --danger:#ef4444;
+
+  --sidebar: 240px;
+  --radius: 12px;
+  --shadow-md: 0 10px 30px rgba(0,0,0,.25);
+  --shadow-sm: 0 6px 20px rgba(0,0,0,.18);
+}
+
+/* =======================================
+  LAYOUT GERAL + COMPENSAÇÃO DO SIDEBAR
+======================================= */
+html, body{
+  height: auto;
+}
+
+body{
+  padding-left: var(--sidebar);
+}
+
+:focus-visible{
+  outline: 2px solid color-mix(in oklab, var(--primary), white 20%);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+a, button{
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* =======================================
+  HEADER (SIDEBAR)
+======================================= */
 .topbar{
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0 auto 0 0;
   height: 100vh;
-  width: 240px;
-  background: rgba(0, 0, 0, .25);
-  backdrop-filter: blur(6px);
-  border-right: 1px solid rgba(255,255,255,.06);
+  width: var(--sidebar);
+  background: rgba(2,6,23,.55);
+  backdrop-filter: blur(8px);
+  border-right: 1px solid rgba(255,255,255,.08);
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  z-index: 10;
+  padding: 20px 16px;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
 }
 
 .brand{
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 20px;
-  margin-bottom: 40px;
+  font-size: 18px;
+  letter-spacing: .2px;
+  margin: 6px 6px 28px;
 }
 
 .logo-dot{
@@ -30,93 +73,104 @@
   border-radius: 50%;
   background: var(--primary);
   display: inline-block;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary), transparent 70%);
 }
 
 .nav{
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  font-size: 24px;
+  gap: 10px;
+  font-size: 15px;
   list-style: none;
-}
-
-.nav li:hover a{
-  border-radius: 5px 0 0 5px;
-  border-left: 4px solid var(--primary);
-  padding-left: 0.4rem;
-  font-weight: bold;
-  transform: translateX(5px);
-}
-
-.nav li a.ativo{
-  border-radius: 5px 0 0 5px;
-  border-left: 4px solid var(--primary);
-  padding-left: 0.4rem;
-  font-weight: bold;
-  transform: translateX(5px);
+  padding: 0 6px;
 }
 
 .nav li a{
   color: var(--text);
   text-decoration: none;
   opacity: .9;
-  transition: opacity .2s;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+  transition: transform .18s ease, background .18s ease, opacity .18s ease;
+  will-change: transform;
+}
+
+.nav li a svg{
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
 }
 
 .nav li a:hover{
   opacity: 1;
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  transform: translateX(4px);
+}
+
+.nav li a.ativo{
+  background: color-mix(in oklab, var(--primary) 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent);
+  font-weight: 600;
 }
 
 .logout{
   margin-top: auto;
-  opacity: .75;
+  opacity: .8;
 }
 
-/*
-  =========== ESTILO DO FOOTER ===========
-*/
+.logout:hover{
+  opacity: 1;
+}
+
+/* =======================================
+  FOOTER
+======================================= */
 .footer{
   margin-top: 48px;
   border-top: 1px solid color-mix(in oklab, var(--muted), transparent 60%);
-  /* background: black; */
 }
 .footer p{
   color: var(--muted);
   font-size: 14px;
-  /* padding-block: 16px; */
   text-align: center;
+  padding-block: 16px;
 }
 
-/*
-  =========== ESTILO DO WELCOME ===========
-*/
+/* =======================================
+  WELCOME BANNER
+======================================= */
 .centralizawelcome{
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 16px;
+  padding: 0 16px;
 }
 
 .welcome-message{
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   text-align: center;
-  background: var(--bg1);
-  font-size: 20px;
-  border-radius: 8px;
-  padding: 9px 20px;
-  width: 30rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: color-mix(in oklab, var(--bg1), white 4%);
+  font-size: 18px;
+  border-radius: 12px;
+  padding: 10px 16px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow: var(--shadow-sm);
   opacity: 0;
-  transform: translateY(-30px);
-  animation: welcome-in 0.7s cubic-bezier(.4,0,.2,1) forwards, welcome-out 0.7s cubic-bezier(.4,0,.2,1) 3.5s forwards;
+  transform: translateY(-18px);
+  animation: welcome-in .6s cubic-bezier(.4,0,.2,1) .1s forwards, welcome-out .6s cubic-bezier(.4,0,.2,1) 3.3s forwards;
 }
 
 .imageWelcome img{
-  width: 70px;
-  height: 70px;
-  margin-right: 1px;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.2));
 }
 
 @keyframes welcome-in{
@@ -125,10 +179,159 @@
     transform: translateY(0);
   }
 }
-
 @keyframes welcome-out{
   to{
     opacity: 0;
-    transform: translateY(-30px);
+    transform:translateY(-18px);
+  }
+}
+
+@media(prefers-reduced-motion: reduce){
+  .welcome-message{
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* =======================================
+  RESPONSIVO (<= 1024px)
+  - Sidebar vira topo; conteúdo não tem padding esquerdo
+======================================= */
+@media (max-width: 1024px){
+  body{
+    padding-left: 0;
+  }
+
+  .topbar{
+    height: auto;
+    width: 100%;
+    position: sticky;
+    top: 0; left: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+
+  .brand{
+    margin: 0;
+  }
+
+  .nav{
+    flex-direction: row;
+    /* align-items: center; */
+    gap: 8px;
+    margin-left: auto;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .nav li a{
+    padding: 8px 10px;
+    transform: none !important;
+  }
+
+  .logout{
+    margin-top: 0;
+  }
+}
+
+
+/* ============================
+  MOBILE MENU (Hambúrguer)
+============================ */
+.hamburger-btn{
+  display: none;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(2,6,23,.55);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  line-height: 0;
+  cursor: pointer;
+  transition: background .18s ease, transform .12s ease;
+}
+
+.hamburger-btn:hover{
+  background: rgba(2,6,23,.7);
+  transform: translateY(-1px);
+}
+
+.hamburger-btn:active{
+  transform: translateY(0);
+}
+
+.mobile-backdrop{
+  display: none;
+}
+.mobile-drawer{
+  display: none;
+}
+
+@media (max-width: 1024px){
+  .hamburger-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .nav{
+    display: none;
+  }
+
+  .mobile-backdrop{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    backdrop-filter: blur(2px);
+    z-index: 120;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease;
+    display: block;
+  }
+
+  .mobile-backdrop.open{
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-drawer{
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(78vw, 320px);
+    background: rgba(2,6,23,.92);
+    border-right: 1px solid rgba(255,255,255,.08);
+    box-shadow: var(--shadow-sm);
+    z-index: 130;
+    transform: translateX(-100%);
+    transition: transform .22s cubic-bezier(.4,0,.2,1);
+    padding: 18px 14px;
+    display: block;
+  }
+
+  .mobile-drawer.open{
+    transform: translateX(0);
+  }
+
+  .mobile-drawer .nav{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 15px;
+    list-style: none;
+    padding: 0 2px;
+    margin-top: 12px;
+  }
+
+  .no-scroll{
+    overflow: hidden;
+    height: 100svh;
   }
 }

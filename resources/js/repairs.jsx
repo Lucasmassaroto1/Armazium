@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import '../css/home.css';
 import '../css/produtoModal.css';
+import { VscSave, VscSync, VscEye, VscTrash } from "react-icons/vsc";  // Save && Sync && Eye && Trash
 
 function Repairs(){
   const [date, setDate] = useState(new Date().toISOString().slice(0,10));
@@ -27,8 +28,8 @@ function Repairs(){
   const STATUS_PT ={
     open: "Pendente",
     in_progress: "Em andamento",
-    done: "Concluída",
-    canceled: "Cancelada",
+    done: "Concluído",
+    canceled: "Cancelado",
   };
 
   async function load(){
@@ -122,7 +123,7 @@ function Repairs(){
                     <td>{STATUS_PT[r.status] ?? r.status}</td>
                     <td>{r.price ? `R$ ${r.price.toFixed(2).replace('.',',')}` : '-'}</td>
                     <td className="muted">{r.created_at}</td>
-                    <td className="action"><a className="link" href="#repair-modal" onClick={()=>startShow(r.id)}>Ver detalhes</a></td>
+                    <td className="action"><a className="link" href="#repair-modal" onClick={()=>startShow(r.id)}><VscEye style={{fontSize:24}}/> Detalhes</a></td>
                   </tr>
                 ))}
               </tbody>
@@ -155,8 +156,8 @@ function Repairs(){
                       <select id="status" name="status" value={status} onChange={e=>setStatus(e.target.value)}>
                         <option value="open">Pendente</option>
                         <option value="in_progress">Em andamento</option>
-                        <option value="done">Concluída</option>
-                        <option value="canceled">Cancelada</option>
+                        <option value="done">Concluído</option>
+                        <option value="canceled">Cancelado</option>
                       </select>
                     </div>
 
@@ -186,7 +187,7 @@ function Repairs(){
 
                   <div className="form__actions">
                     <a href="#" className="btn">Cancelar</a>
-                    <button type="submit" className="btn primary">Salvar manutenção</button>
+                    <button type="submit" className="btn primary"><VscSave style={{fontSize:24}}/> Salvar</button>
                   </div>
                 </form>
               </>
@@ -207,10 +208,10 @@ function Repairs(){
                     <select id="new_status" name="status" defaultValue={viewRepair.status} style={{width:136}}>
                       <option value="open">Pendente</option>
                       <option value="in_progress">Em andamento</option>
-                      <option value="done">Concluída</option>
-                      <option value="canceled">Cancelada</option>
+                      <option value="done">Concluído</option>
+                      <option value="canceled">Cancelado</option>
                     </select>
-                    <button type="submit" className="btn primary">Atualizar status</button>
+                    <button type="submit" className="btn primary"><VscSync style={{fontSize:24}}/> Atualizar</button>
                   </form>
                 )}
 
@@ -235,7 +236,7 @@ function Repairs(){
                     <form method="post" action={`/repairs/${viewRepair.id}`} onSubmit={(e)=>{ if(!confirm("Tem certeza que deseja excluir esta manutenção?")) e.preventDefault(); }}>
                       <input type="hidden" name="_token" value={window.csrfToken}/>
                       <input type="hidden" name="_method" value="DELETE"/>
-                      <button type="submit" className="btn danger">Excluir</button>
+                      <button type="submit" className="btn danger"><VscTrash style={{fontSize:24}}/> Excluir</button>
                     </form>
                   )}
                   <a href="#" className="btn">Fechar</a>

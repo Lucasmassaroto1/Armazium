@@ -125,3 +125,24 @@ input:focus, select:focus, textarea:focus{
 .danger:hover{
   background: var(--dangerHover);
 }
+
+
+
+.btn.primary{
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn.primary:hover{
+  background: var(--primary-2);
+}
+
+.btn.ghost{
+  background: transparent;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.14);
+}
+
+.btn.ghost:hover{
+  background: rgba(255,255,255,.06);
+}
