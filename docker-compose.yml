@@ -1,0 +1,27 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /bin/sh -lc "./docker/start-dev.sh"
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - VITE_HOST=0.0.0.0
+      - VITE_PORT=5173
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - .:/var/www
+      # Mantém vendor/node_modules dentro do container (persistentes)
+      - /var/www/vendor
+      - /var/www/node_modules
+    working_dir: /var/www
+    tty: true
+    stdin_open: true

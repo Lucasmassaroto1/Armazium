@@ -1,0 +1,127 @@
+.modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+}
+
+.modal:target{
+  display: block;
+}
+
+.modal__overlay{
+  position: absolute;
+  inset: 0;
+  background: rgba(4,8,20,.6);
+  backdrop-filter: blur(2px);
+}
+
+.modal__panel{
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(720px, calc(100% - 24px));
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  max-height: min(780px, 90vh);
+  overflow: auto;
+}
+
+.modal__title{
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.modal__desc{
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.modal__close{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text);
+  border: 1px solid var(--border);
+  background: #0e1320;
+}
+
+.modal__close:focus{
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+form{
+  display: grid;
+  gap: 16px;
+}
+
+.grid{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.field{
+  display: grid;
+  gap: 8px;
+  grid-column: span 12;
+}
+
+.field.half{
+  grid-column: span 6;
+}
+
+.field.third{
+  grid-column: span 4;
+}
+
+label{
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: .35px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+input, select, textarea{
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0d1220;
+  color: var(--fg);
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus{
+  box-shadow: var(--ring);
+  border-color: transparent;
+}
+
+.form__actions{
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.helper{
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.danger{
+  background: var(--danger);
+}
+.danger:hover{
+  background: var(--dangerHover);
+}
