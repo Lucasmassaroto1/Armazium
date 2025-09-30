@@ -83,6 +83,16 @@ function Sales(){
     }
   }
 
+  // Alternar entre "Ver tudo" e "Ver menos"
+  async function toggleAll(){
+    if (showAll) {
+      await load();       // volta para o dia selecionado
+    } else {
+      await exibitudo();  // mostra todas
+    }
+  }
+
+
   async function loadOptions(){
     try{
       const [cRes, pRes] = await Promise.all([
@@ -221,14 +231,20 @@ function Sales(){
           <div className="panel-head">
             <div className="title-row">
               <h1>Vendas</h1>
-              <div style={{marginTop:12, display:'flex', gap:8, alignItems:'center'}}>
-                <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
-                <button className="btn" onClick={load}>Filtrar</button>
-                <button className="btn" onClick={exibitudo} style={{width:200}}><VscEye style={{fontSize:24}}/> Ver tudo</button>
-              </div>
             </div>
-            <div className="badge">Total pago do dia: R$ {totalDia.toFixed(2).replace('.',',')}</div>
-            <a className="btn" href="#sale-modal" onClick={openModalNovaVenda}>+ Nova venda</a>
+
+            <div className="panel-head-right">
+              <div className="badge">Total pago do dia: R$ {totalDia.toFixed(2).replace('.',',')}</div>
+            </div>
+          </div>
+
+          <div className="toolbar" aria-busy={loading}>
+            <div className="toolbar__left">
+              <input type="date" value={date} onChange={e=>setDate(e.target.value)} aria-label="Data" disabled={showAll}/>
+              <button className="btn" onClick={load}>Filtrar</button>
+              <button className="btn" onClick={toggleAll} style={{minWidth:140}}> <VscEye style={{fontSize:20}}/>{showAll ? 'Ver menos' : 'Ver tudo'}</button>
+            </div>
+              <a className="btn" href="#sale-modal" onClick={openModalNovaVenda}>+ Nova venda</a>
           </div>
 
           {err && <div className="alert" style={{margin:'8px 16px 0'}}>{err}</div>}
@@ -247,8 +263,8 @@ function Sales(){
                   <tr key={s.id}>
                     <td>#{s.id}</td>
                     <td>{s.client}</td>
-                    <td>R$ {s.total.toFixed(2).replace('.',',')}</td>
-                    <td>{STATUS_PT[s.status] ?? s.status}</td>
+                    <td>R${s.total.toFixed(2).replace('.',',')}</td>
+                    <td><span className={`status status--${s.status}`}>{STATUS_PT[s.status] ?? s.status}</span></td>
                     <td className="muted">{s.created_at}</td>
                     <td className="action"><a className="link" href="#sale-modal" onClick={()=>openModalDetalhes(s.id)}>Ver detalhes</a></td>
                   </tr>
@@ -340,7 +356,7 @@ function Sales(){
                                 <tr key={idx}>
                                   <td>
                                     <div style={{display:'grid', gridTemplateColumns:'100px 1fr', gap:8}}>
-                                      <input ype="number" min="1" placeholder="ID" value={it.productIdInput} onChange={e=>setProductFromId(idx, e.target.value)} onBlur={e=>setProductFromId(idx, e.target.value)}/>
+                                      <input type="number" min="1" placeholder="ID" value={it.productIdInput} onChange={e=>setProductFromId(idx, e.target.value)} onBlur={e=>setProductFromId(idx, e.target.value)}/>
                                       <div>
                                         <input type="text" placeholder="Nome ou SKU" list={`prod-name-list-${idx}`} value={it.productNameInput} onChange={e=>setProductFromName(idx, e.target.value)} onBlur={e=>setProductFromName(idx, e.target.value)}/>
                                         <datalist id={`prod-name-list-${idx}`}>
