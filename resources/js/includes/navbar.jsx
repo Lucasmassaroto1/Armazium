@@ -1,4 +1,113 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import '../../css/includes.css';
+import { VscGraph, VscSignOut, VscMenu } from "react-icons/vsc";
+import { BsBoxSeam, BsCartCheck } from "react-icons/bs";
+import { FaUsers, FaTools } from "react-icons/fa";
+
+export default function Navbar(){
+  const [open, setOpen] = useState(false);
+
+  const normalize = useCallback((path) => {
+    if (!path) return '/';
+    return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
+  }, []);
+
+  const currentPath = useMemo(() => normalize(window.location.pathname), [normalize]);
+
+  const isActive = useCallback((linkPath) => {
+    const p = normalize(linkPath);
+    if (p === '/') return currentPath === '/';
+    return currentPath === p || currentPath.startsWith(p + '/');
+  }, [currentPath, normalize]);
+
+  const navItems = useMemo(() => ([
+    { href: '/', label: 'Dashboard', icon: <VscGraph/> },
+    { href: '/products', label: 'Produtos', icon: <BsBoxSeam/> },
+    { href: '/clients', label: 'Clientes', icon: <FaUsers/> },
+    { href: '/sales', label: 'Vendas', icon: <BsCartCheck/> },
+    { href: '/repairs', label: 'Manutenções', icon: <FaTools/> },
+  ]), []);
+
+  async function handleLogout(e) {
+    e.preventDefault();
+    try{
+      await fetch("/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "X-CSRF-TOKEN": window.csrfToken || "",
+          "Accept": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      });
+    }catch (err){
+      console.error("Erro ao deslogar:", err);
+    }finally{
+      window.location.href = "/login";
+    }
+  }
+
+  // Fecha com ESC
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Trava o scroll do body quando aberto
+  useEffect(() => {
+    document.body.classList.toggle('no-scroll', open);
+    return () => document.body.classList.remove('no-scroll');
+  }, [open]);
+
+  // Fecha o menu quando a rota mudar via <a> internos
+  useEffect(() => {
+    const onClick = (e) => {
+      const a = e.target.closest?.('a');
+      if (a && a.href && a.origin === window.location.origin) setOpen(false);
+    };
+    document.addEventListener('click', onClick, { passive: true });
+    return () => document.removeEventListener('click', onClick);
+  }, []);
+
+  const NavList = ({ variant }) => (
+    <ul className="nav" role="list" aria-label={`Navegação principal (${variant})`}>
+      {navItems.map(({ href, label, icon }) => (
+        <li key={href}><a href={href} className={isActive(href) ? 'ativo' : ''} aria-current={isActive(href) ? 'page' : undefined}>{icon} <span>{label}</span></a></li>
+      ))}
+      <li><a href="/logout" className="logout" onClick={handleLogout}><VscSignOut/> <span>Sair</span></a></li>
+    </ul>
+  );
+
+  return(
+    <>
+      <div className={`mobile-backdrop ${open ? 'open' : ''}`} onClick={() => setOpen(false)} aria-hidden={!open}/>
+
+      <aside className={`mobile-drawer ${open ? 'open' : ''}`} aria-hidden={!open} aria-label="Menu">
+        <div className="brand" style={{margin: '6px 6px 14px'}}>
+          <span className="logo-dot" aria-hidden="true"/> <strong>Armazium</strong>
+        </div>
+        <NavList variant="mobile" />
+      </aside>
+
+      <header className="topbar">
+        <div className="brand">
+          <span className="logo-dot" aria-hidden="true"/> <strong>Armazium</strong>
+        </div>
+
+        <button className="hamburger-btn" aria-label={open ? 'Fechar menu' : 'Abrir menu'} aria-expanded={open} aria-controls="mobile-menu" onClick={() => setOpen(v => !v)} title={open ? 'Fechar menu' : 'Abrir menu'}><VscMenu/></button>
+
+        <nav aria-label="Navegação principal (desktop)">
+          <NavList variant="desktop" />
+        </nav>
+      </header>
+    </>
+  );
+}
+
+/* import React, { useEffect, useState, useCallback } from 'react';
 import '../../css/includes.css';
 import { VscGraph, VscSignOut, VscMenu } from "react-icons/vsc";
 import { BsBoxSeam, BsCartCheck } from "react-icons/bs";
@@ -104,4 +213,4 @@ export default function Navbar(){
       </header>
     </>
   );
-}
+} */

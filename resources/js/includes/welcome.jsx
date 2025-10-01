@@ -2,11 +2,14 @@ import React from 'react';
 import "../../css/includes.css";
 
 export default function Welcome({ user }){
-  return(
+  const name = user?.name ?? '...';
+  return (
     <div className="centralizawelcome">
       <div className="welcome-message">
-        <div className="imageWelcome"><img src="armazium.png"/></div>
-        {user ? `Bem-vindo(a), ${user.name}` : '...'}
+        <div className="imageWelcome">
+          <img src="armazium.png" alt="Logotipo Armazium" loading="lazy"/>
+        </div>
+        {`Bem-vindo(a), ${name}`}
       </div>
     </div>
   );

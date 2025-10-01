@@ -10,6 +10,74 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\RepairController;
 
+/* // ============ LOGIN / REGISTER ============
+Route::view('/login', 'login')->name('login');
+Route::view('/register', 'register')->name('register.view');
+
+Route::post('/register', [AuthController::class, 'register'])->name('register');
+Route::post('/login',    [AuthController::class, 'login'])->name('login.post');
+Route::post('/logout',   [AuthController::class, 'logout'])
+  ->middleware('auth')
+  ->name('logout');
+
+// ============ ÁREA AUTENTICADA ============
+Route::middleware('auth')->group(function () {
+  // Home (dashboard “shell”)
+  Route::view('/', 'home')->name('home');
+
+  // Dashboard (métricas)
+  Route::get('/dashboard/metrics', [DashboardController::class, 'index'])
+    ->name('dashboard.metrics');
+
+  // --------- Produtos ---------
+  Route::prefix('products')->name('products.')->group(function () {
+    Route::view('/', 'products')->name('view');           // Blade
+    Route::get('/list', [ProductController::class, 'index'])->name('list');   // JSON
+    Route::post('/', [ProductController::class, 'store'])->name('store');
+    Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+    Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+  });
+
+  // --------- Clientes ---------
+  Route::prefix('clients')->name('clients.')->group(function () {
+    Route::view('/', 'clients')->name('view');
+    Route::get('/list', [ClientController::class, 'index'])->name('list');
+    Route::post('/', [ClientController::class, 'store'])->name('store');
+    Route::put('/{client}', [ClientController::class, 'update'])->name('update');
+    Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
+  });
+
+  // --------- Vendas ---------
+  Route::prefix('sales')->name('sales.')->group(function () {
+    Route::view('/', 'sales')->name('view');
+    Route::get('/list', [SaleController::class, 'index'])->name('list');
+    Route::post('/', [SaleController::class, 'store'])->name('store');
+    Route::put('/{sale}', [SaleController::class, 'update'])->name('update');
+    Route::delete('/{sale}', [SaleController::class, 'destroy'])->name('destroy');
+    Route::get('/{sale}', [SaleController::class, 'show'])->name('show');
+  });
+
+  // --------- Manutenções ---------
+  Route::prefix('repairs')->name('repairs.')->group(function () {
+    Route::view('/', 'repairs')->name('view');
+    Route::get('/list', [RepairController::class, 'index'])->name('list');
+    Route::post('/', [RepairController::class, 'store'])->name('store');
+    Route::put('/{repair}', [RepairController::class, 'update'])->name('update');
+    Route::delete('/{repair}', [RepairController::class, 'destroy'])->name('destroy');
+    Route::get('/{repair}', [RepairController::class, 'show'])->name('show');
+  });
+
+  // Perfil/logado (útil pro front)
+  Route::get('/me', fn () => response()->json(['ok' => true, 'user' => Auth::user()]))
+    ->name('me');
+});
+ */
+
+
+
+
+
+
 // ============ ROTA LOGIN ============
 Route::get('/login', fn() => view('login'))->name('login');
 Route::get('/register', fn() => view('register'));
