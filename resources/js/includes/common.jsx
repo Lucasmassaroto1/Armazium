@@ -1,5 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import '../../css/includes.css';
 import Header from "./navbar.jsx";
 import Footer from "./footer.jsx";
 import Welcome from "./welcome.jsx";

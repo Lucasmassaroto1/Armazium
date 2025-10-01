@@ -1,5 +1,4 @@
 import React from 'react';
-import "../../css/includes.css";
 
 export default function Welcome({ user }){
   const name = user?.name ?? '...';

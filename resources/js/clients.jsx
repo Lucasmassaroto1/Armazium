@@ -149,17 +149,17 @@ function Clients(){
               <div className="grid">
                 <div className="field">
                   <label htmlFor="name">Nome</label>
-                  <input id="name" name="name" type="text" placeholder="Ex.: Lucas Silva" required value={form.name} onChange={e=>setField("name", e.target.value)}/>
+                  <input id="name" name="name" type="text" placeholder="Ex.: Lucas Silva" required value={form.name} onChange={e=>setField("name", e.target.value)} disabled={form.is_system}/>
                 </div>
 
                 <div className="field half">
                   <label htmlFor="email">Email</label>
-                  <input id="email" name="email" type="email" placeholder="email@exemplo.com" value={form.email} onChange={e=>setField("email", e.target.value)}/>
+                  <input id="email" name="email" type="email" placeholder="email@exemplo.com" value={form.email} onChange={e=>setField("email", e.target.value)} disabled={form.is_system}/>
                 </div>
 
                 <div className="field half">
                   <label htmlFor="phone">Telefone</label>
-                  <input id="phone" name="phone" type="text" inputMode="tel" placeholder="(00) 00000-0000" value={form.phone} onChange={e=>setField("phone", formatPhoneBR(e.target.value))}/>
+                  <input id="phone" name="phone" type="text" inputMode="tel" placeholder="(00) 00000-0000" value={form.phone} onChange={e=>setField("phone", formatPhoneBR(e.target.value))} disabled={form.is_system}/>
                 </div>
 
                 <div className="field">

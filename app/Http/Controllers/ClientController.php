@@ -67,10 +67,24 @@ class ClientController extends Controller{
   public function update(ClientUpdateRequest $request, Client $client){
     abort_if($client->user_id !== auth()->id() && !$client->is_system, 403);
 
-    $client->update($request->validated());
+    $data = $request->validated();
+
+    if($client->is_system){
+      unset($data['name'], $data['email'], $data['phone'], $data['user_id'], $data['is_system']);
+    }else{
+      if(isset($data['name']) && strcasecmp($data['name'], 'Consumidor') === 0){
+        throw \Illuminate\Validation\ValidationException::withMessages([
+          'name' => 'O nome "Consumidor" é reservado pelo sistema.',
+        ]);
+      }
+      unset($data['is_system'], $data['user_id']);
+    }
+
+    $client->update($data);
+
     return $request->expectsJson()
-      ? response()->json(['data' => $client])
-      : redirect('/clients')->with('success', 'Cliente atualizado!');
+        ? response()->json(['data' => $client])
+        : redirect('/clients')->with('success', 'Cliente atualizado!');
   }
 
   private function ensureGlobalConsumer(): void{
