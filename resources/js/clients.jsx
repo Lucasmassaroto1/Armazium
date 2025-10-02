@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import "../css/home.css";
-import "../css/produtoModal.css";
 import { VscEdit, VscTrash, VscSave } from "react-icons/vsc";
+import Modal from "../js/components/Modal.jsx";
 
 const cx = (...c) => c.filter(Boolean).join(" ");
 
@@ -16,9 +16,7 @@ function formatPhoneBR(v) {
 
 /* ---------- Componentes puros ---------- */
 const Toolbar = React.memo(function Toolbar({ q, setQ, loading, onSearch, onClear, onCreate }) {
-  const onKeyDown = useCallback((e) =>{
-    if(e.key === "Enter") onSearch();
-  }, [onSearch]);
+  const onKeyDown = useCallback((e) => { if(e.key === "Enter") onSearch(); }, [onSearch]);
 
   return (
     <div className="toolbar" aria-busy={loading}>
@@ -53,12 +51,7 @@ const Table = React.memo(function Table({ loading, items, onEdit }) {
       <table>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Nome</th>
-            <th>Email</th>
-            <th>Telefone</th>
-            <th>Observações</th>
-            <th></th>
+            <th>#</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Observações</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -185,65 +178,58 @@ function Clients() {
 
           {/* {qsString && <span>Filtro: <code>{qsString}</code></span>} */}
 
-          <Table loading={loading} items={items} onEdit={startEdit} />
+          <Table loading={loading} items={items} onEdit={startEdit}/>
 
-          {/* ======= Modal CSS-only (criar, editar e excluir) ======= */}
-          <section id="novo-cliente" className="modal" aria-labelledby="titulo-modal" aria-modal="true" role="dialog">
-            <a href="#" className="modal__overlay" aria-label="Fechar"></a>
+          {/* ======= Modal unificado ======= */}
+          <Modal id="novo-cliente" title={mode === "edit" ? "Editar cliente" : "Adicionar cliente"}>
+            <form method="post" action={mode === "edit" ? `/clients/${editingId}` : "/clients"}>
+              <input type="hidden" name="_token" value={window.csrfToken}/>
+              {mode === "edit" && <input type="hidden" name="_method" value="PUT"/>}
 
-            <div className="modal__panel">
-              <a className="modal__close" href="#" aria-label="Fechar">✕</a>
+              <div className="grid">
+                <div className="field">
+                  <label htmlFor="name">Nome</label>
+                  <input id="name" name="name" type="text" placeholder="Ex.: Lucas Silva" required value={form.name} onChange={onFieldChange("name")} disabled={form.is_system}/>
+                </div>
 
-              <h2 id="titulo-modal" className="modal__title">
-                {mode === "edit" ? "Editar cliente" : "Adicionar cliente"}
-              </h2>
+                <div className="field half">
+                  <label htmlFor="email">Email</label>
+                  <input id="email" name="email" type="email" placeholder="email@exemplo.com" value={form.email} onChange={onFieldChange("email")} disabled={form.is_system}/>
+                </div>
 
-              <form method="post" action={mode === "edit" ? `/clients/${editingId}` : "/clients"}>
+                <div className="field half">
+                  <label htmlFor="phone">Telefone</label>
+                  <input id="phone" name="phone" type="text" inputMode="tel" placeholder="(00) 00000-0000" value={form.phone} onChange={(e) => setField("phone", formatPhoneBR(e.target.value))} disabled={form.is_system}/>
+                </div>
+
+                <div className="field">
+                  <label htmlFor="notes">Observações</label>
+                  <input id="notes" name="notes" type="text" placeholder="Anotações do cliente" value={form.notes} onChange={onFieldChange("notes")}/>
+                </div>
+              </div>
+
+              <div className="form__actions">
+                {mode === "edit" && !form.is_system && (
+                  <button type="submit" className="btn danger" form="client-delete-form" onClick={(e) => { if (!confirm("Tem certeza que deseja excluir este cliente?")) e.preventDefault(); }}>
+                    <VscTrash size={20}/> Excluir
+                  </button>
+                )}
+
+                <a href="#" className="btn ghost">Cancelar</a>
+                <button type="submit" className="btn primary">
+                  <VscSave size={20}/> {mode === "edit" ? "Salvar" : "Salvar"}
+                </button>
+              </div>
+            </form>
+
+            {mode === "edit" && !form.is_system && (
+              <form id="client-delete-form" method="post" action={`/clients/${editingId}`}>
                 <input type="hidden" name="_token" value={window.csrfToken} />
-                {mode === "edit" && <input type="hidden" name="_method" value="PUT" />}
-
-                <div className="grid">
-                  <div className="field">
-                    <label htmlFor="name">Nome</label>
-                    <input id="name" name="name" type="text" placeholder="Ex.: Lucas Silva" required value={form.name} onChange={onFieldChange("name")} disabled={form.is_system}/>
-                  </div>
-
-                  <div className="field half">
-                    <label htmlFor="email">Email</label>
-                    <input id="email" name="email" type="email" placeholder="email@exemplo.com" value={form.email} onChange={onFieldChange("email")} disabled={form.is_system}/>
-                  </div>
-
-                  <div className="field half">
-                    <label htmlFor="phone">Telefone</label>
-                    <input id="phone" name="phone" type="text" inputMode="tel" placeholder="(00) 00000-0000" value={form.phone} onChange={(e) => setField("phone", formatPhoneBR(e.target.value))} disabled={form.is_system}/>
-                  </div>
-
-                  <div className="field">
-                    <label htmlFor="notes">Observações</label>
-                    <input id="notes" name="notes" type="text" placeholder="Anotações do cliente" value={form.notes} onChange={onFieldChange("notes")}/>
-                  </div>
-                </div>
-
-                <div className="form__actions">
-                  {mode === "edit" && !form.is_system && (
-                    <button type="submit" className="btn danger" form="client-delete-form" onClick={(e) => { if (!confirm("Tem certeza que deseja excluir este cliente?")) e.preventDefault(); }}><VscTrash size={20} /> Excluir</button>
-                  )}
-
-                  <a href="#" className="btn ghost">Cancelar</a>
-
-                  <button type="submit" className="btn primary"><VscSave size={20}/> {mode === "edit" ? "Salvar" : "Salvar"}</button>
-                </div>
+                <input type="hidden" name="_method" value="DELETE" />
               </form>
-
-              {mode === "edit" && !form.is_system && (
-                <form id="client-delete-form" method="post" action={`/clients/${editingId}`}>
-                  <input type="hidden" name="_token" value={window.csrfToken} />
-                  <input type="hidden" name="_method" value="DELETE" />
-                </form>
-              )}
-            </div>
-          </section>
-          {/* ======= /Modal ======= */}
+            )}
+          </Modal>
+          {/* ======= /modal ======= */}
         </section>
       </main>
     </div>

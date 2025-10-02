@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import "../css/home.css";
 import { VscEye } from "react-icons/vsc";
-
 import { BsBoxSeam, BsCartCheck } from "react-icons/bs";
 import { FaTools } from "react-icons/fa";
 
@@ -10,12 +9,12 @@ const cx = (...c) => c.filter(Boolean).join(" ");
 const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 /** ----- Componentes puros/memorizados ----- */
-const StatCard = React.memo(function StatCard({ label, value, loading, successWhen = (v) => v > 0, link }){
+const StatCard = React.memo(function StatCard({ label, value, loading, successWhen = (v) => v > 0, link, Icon }){
   const isSuccess = !loading && successWhen(value);
   const variant = isSuccess ? "success" : (label.toLowerCase().includes("estoque") && value > 0 ? "danger" : (!loading ? "danger" : ""));
   return(
     <div className={cx("card", variant)}>
-      <div className="card-label">{label}</div>
+      <div className="card-label">{Icon ? <Icon style={{ fontSize: 20 }} aria-hidden/> : null}<span>{label}</span></div>
       <div className="card-value">{loading ? "..." : value}</div>
       {link && isSuccess && (
         <a className={cx("card-link", variant)} href={link.href}>{link.text}</a>
@@ -144,14 +143,14 @@ function Home(){
         {error && <div className="alert">{error}</div>}
 
         <section className="grid-cards">
-          <StatCard label="Vendas (hoje)" value={metrics.salesToday} loading={loading} successWhen={(v) => v > 0} link={{ href: "/sales?f=low", text: "Detalhes" }}/>
+          <StatCard Icon={BsCartCheck} label=" Vendas (hoje)" value={metrics.salesToday} loading={loading} successWhen={(v) => v > 0} link={{ href: "/sales?f=low", text: "Detalhes" }}/>
 
-          <StatCard label="Manutenções (hoje)" value={metrics.repairsToday} loading={loading} successWhen={(v) => v > 0} link={{ href: "/repairs?f=low", text: "Detalhes" }}/>
+          <StatCard Icon={FaTools} label=" Manutenções (hoje)" value={metrics.repairsToday} loading={loading} successWhen={(v) => v > 0} link={{ href: "/repairs?f=low", text: "Detalhes" }}/>
 
           <MoneyCard label="Faturado (hoje)" value={metrics.revenueToday} loading={loading}/>
 
           <div className={cx("card", (!loading && lowStockCount > 0) ? "danger" : "")}>
-            <div className="card-label">Items com baixo estoque</div>
+            <div className="card-label"><BsBoxSeam style={{ fontSize: 20 }}/> Produtos com baixo estoque</div>
             <div className="card-value">{loading ? "..." : lowStockCount}</div>
             {!loading && lowStockCount > 0 && (
               <a className="card-link" href="/products?f=low"><VscEye style={{ fontSize: 20 }}/> ver todos</a>

@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import "../css/home.css";
-import "../css/produtoModal.css";
 import { VscSave, VscSync, VscEye, VscTrash } from "react-icons/vsc";
+import Modal from "../js/components/Modal.jsx";
 
 const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const STATUS_PT = { open: "Pendente", in_progress: "Em andamento", done: "Concluído", canceled: "Cancelado" };
@@ -25,7 +25,7 @@ const Table = React.memo(function Table({ loading, rows, onOpen }) {
               <td>#{r.id}</td>
               <td>{r.client}</td>
               <td>{r.device}</td>
-              <td>{STATUS_PT[r.status] ?? r.status}</td>
+              <td><span className={`status status--${r.status}`}>{STATUS_PT[r.status] ?? r.status}</span></td>
               <td>{r.price != null ? BRL.format(Number(r.price || 0)) : "-"}</td>
               <td className="muted">{r.created_at}</td>
               <td className="action"><a className="link" href="#repair-modal" onClick={() => onOpen(r.id)}><VscEye style={{ fontSize: 20 }}/> Detalhes</a></td>
@@ -192,134 +192,127 @@ function Repairs() {
           <Table loading={loading} rows={rows} onOpen={startShow} />
         </section>
 
-        {/* ======= Modal (criar / detalhes) ======= */}
-        <section id="repair-modal" className="modal" aria-labelledby="titulo-repair" aria-modal="true" role="dialog">
-          <a href="#" className="modal__overlay" aria-label="Fechar"></a>
+        {/* ======= Modal unificado ======= */}
+        <Modal id="repair-modal" title={mode === "create" ? "Nova manutenção" : null}>
+          {mode === "create" ? (
+            <>
+              <form method="post" action="/repairs">
+                <input type="hidden" name="_token" value={window.csrfToken} />
 
-          <div className="modal__panel">
-            <a className="modal__close" href="#" aria-label="Fechar">✕</a>
-
-            {mode === "create" ? (
-              <>
-                <h2 id="titulo-repair" className="modal__title">Nova manutenção</h2>
-
-                <form method="post" action="/repairs">
-                  <input type="hidden" name="_token" value={window.csrfToken} />
-
-                  <div className="grid">
-                    <div className="field half">
-                      <label htmlFor="received_at">Data de recebimento</label>
-                      <input id="received_at" name="received_at" type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} required />
-                    </div>
-
-                    <div className="field half">
-                      <label htmlFor="status">Status</label>
-                      <select id="status" name="status" value={status} onChange={(e) => setStatus(e.target.value)}>
-                        <option value="open">Pendente</option>
-                        <option value="in_progress">Em andamento</option>
-                        <option value="done">Concluído</option>
-                        <option value="canceled">Cancelado</option>
-                      </select>
-                    </div>
-
-                    {/* Cliente (ID/Nome com datalist global + input hidden) */}
-                    <div className="field" style={{ gridColumn: "span 12" }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8 }}>
-                        <div>
-                          <label htmlFor="client_id_input">Cliente (por ID)</label>
-                          <input id="client_id_input" type="number" min="1" placeholder="Ex.: 1" value={clientIdInput} onChange={(e) => setClientFromId(e.target.value)} onBlur={(e) => setClientFromId(e.target.value)}/>
-                        </div>
-                        <div>
-                          <label htmlFor="client_name_input">Cliente (por Nome)</label>
-                          <input id="client_name_input" type="text" placeholder="Ex.: Consumidor" list="clients-name-global" value={clientNameInput} onChange={(e) => setClientFromName(e.target.value)} onBlur={(e) => setClientFromName(e.target.value)}/>
-                        </div>
-                      </div>
-                      {/* valor real para o POST */}
-                      <input type="hidden" id="client_id" name="client_id" value={clientId} required />
-                      <span className="helper">Preencha por ID <b>ou</b> por Nome. O sistema sincroniza automaticamente.</span>
-                    </div>
-
-                    <div className="field half">
-                      <label htmlFor="device">Dispositivo</label>
-                      <input id="device" name="device" type="text" placeholder="Ex.: Notebook Acer" value={device} onChange={(e) => setDevice(e.target.value)} required />
-                    </div>
-
-                    <div className="field half">
-                      <label htmlFor="price">Preço</label>
-                      <input id="price" name="price" type="number" inputMode="decimal" min="0" step="0.01" placeholder="0,00" value={price} onChange={(e) => setPrice(e.target.value)} />
-                    </div>
-
-                    <div className="field" style={{ gridColumn: "span 12" }}>
-                      <label htmlFor="issue">Descrição do problema</label>
-                      <textarea id="issue" name="issue" rows="4" placeholder="Descreva o defeito / serviço" style={{ resize: "vertical" }} value={issue} onChange={(e) => setIssue(e.target.value)} />
-                    </div>
+                <div className="grid">
+                  <div className="field half">
+                    <label htmlFor="received_at">Data de recebimento</label>
+                    <input id="received_at" name="received_at" type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} required />
                   </div>
 
-                  <div className="form__actions">
-                    <a href="#" className="btn">Cancelar</a>
-                    <button type="submit" className="btn primary"><VscSave style={{ fontSize: 24 }} /> Salvar</button>
-                  </div>
-                </form>
-
-                {/* datalist global (renderiza uma única vez) */}
-                <datalist id="clients-name-global">
-                  {clients.slice(0, 1000).map((c) => <option key={c.id} value={c.name} />)}
-                </datalist>
-              </>
-            ) : (
-              <>
-                <h2 className="modal__title">Detalhes da manutenção #{viewRepair?.id ?? ""}</h2>
-                <p className="modal__desc">
-                  Cliente: <b>{viewRepair?.client ?? "-"}</b> &nbsp;•&nbsp;
-                  Status: <b>{STATUS_PT[viewRepair?.status] ?? "-"}</b> &nbsp;•&nbsp;
-                  Recebida: <b>{viewRepair?.received_at ?? "-"}</b>
-                </p>
-
-                {viewRepair?.id && (
-                  <form method="post" action={`/repairs/${viewRepair.id}`} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
-                    <input type="hidden" name="_token" value={window.csrfToken} />
-                    <input type="hidden" name="_method" value="PUT" />
-                    <label htmlFor="new_status" style={{ fontWeight: 600 }}>Status:</label>
-                    <select id="new_status" name="status" defaultValue={viewRepair.status} style={{ width: 136 }}>
+                  <div className="field half">
+                    <label htmlFor="status">Status</label>
+                    <select id="status" name="status" value={status} onChange={(e) => setStatus(e.target.value)}>
                       <option value="open">Pendente</option>
                       <option value="in_progress">Em andamento</option>
                       <option value="done">Concluído</option>
                       <option value="canceled">Cancelado</option>
                     </select>
-                    <button type="submit" className="btn primary"><VscSync style={{ fontSize: 24 }} /> Atualizar</button>
-                  </form>
-                )}
+                  </div>
 
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr><th>Dispositivo</th><th>Preço</th><th>Descrição</th><th>Criada em</th></tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>{viewRepair?.device ?? "-"}</td>
-                        <td>{viewRepair?.price != null ? BRL.format(Number(viewRepair.price || 0)) : "-"}</td>
-                        <td className="muted">{viewRepair?.issue || "-"}</td>
-                        <td className="muted">{viewRepair?.created_at ?? "-"}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  {/* Cliente (ID/Nome + hidden) */}
+                  <div className="field" style={{ gridColumn: "span 12" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8 }}>
+                      <div>
+                        <label htmlFor="client_id_input">Cliente (por ID)</label>
+                        <input id="client_id_input" type="number" min="1" placeholder="Ex.: 1" value={clientIdInput} onChange={(e) => setClientFromId(e.target.value)} onBlur={(e) => setClientFromId(e.target.value)}/>
+                      </div>
+                      <div>
+                        <label htmlFor="client_name_input">Cliente (por Nome)</label>
+                        <input id="client_name_input" type="text" placeholder="Ex.: Consumidor" list="clients-name-global" value={clientNameInput} onChange={(e) => setClientFromName(e.target.value)} onBlur={(e) => setClientFromName(e.target.value)}/>
+                      </div>
+                    </div>
+                    <input type="hidden" id="client_id" name="client_id" value={clientId} required/>
+                    <span className="helper">Preencha por ID <b>ou</b> por Nome. O sistema sincroniza automaticamente.</span>
+                  </div>
+
+                  <div className="field half">
+                    <label htmlFor="device">Dispositivo</label>
+                    <input id="device" name="device" type="text" placeholder="Ex.: Notebook Acer" value={device} onChange={(e) => setDevice(e.target.value)} required/>
+                  </div>
+
+                  <div className="field half">
+                    <label htmlFor="price">Preço</label>
+                    <input id="price" name="price" type="number" inputMode="decimal" min="0" step="0.01" placeholder="0,00" value={price} onChange={(e) => setPrice(e.target.value)}/>
+                  </div>
+
+                  <div className="field" style={{ gridColumn: "span 12" }}>
+                    <label htmlFor="issue">Descrição do problema</label>
+                    <textarea id="issue" name="issue" rows="4" placeholder="Descreva o defeito / serviço" style={{ resize: "vertical" }} value={issue} onChange={(e) => setIssue(e.target.value)}/>
+                  </div>
                 </div>
 
                 <div className="form__actions">
-                  {viewRepair?.id && (
-                    <form method="post" action={`/repairs/${viewRepair.id}`} onSubmit={(e) => { if (!confirm("Tem certeza que deseja excluir esta manutenção?")) e.preventDefault(); }}>
-                      <input type="hidden" name="_token" value={window.csrfToken} />
-                      <input type="hidden" name="_method" value="DELETE" />
-                      <button type="submit" className="btn danger"><VscTrash style={{ fontSize: 24 }} /> Excluir</button>
-                    </form>
-                  )}
-                  <a href="#" className="btn">Fechar</a>
+                  <a href="#" className="btn">Cancelar</a>
+                  <button type="submit" className="btn primary"><VscSave style={{ fontSize: 24 }}/> Salvar</button>
                 </div>
-              </>
-            )}
-          </div>
-        </section>
+              </form>
+
+              {/* datalist global (renderiza uma única vez) */}
+              <datalist id="clients-name-global">
+                {clients.slice(0, 1000).map((c) => <option key={c.id} value={c.name}/>)}
+              </datalist>
+            </>
+          ) : (
+            <>
+              <h2 id="repair-modal-title" className="modal__title">
+                Detalhes da manutenção #{viewRepair?.id ?? ""}
+              </h2>
+              <p className="modal__desc">
+                Cliente: <b>{viewRepair?.client ?? "-"}</b> &nbsp;•&nbsp;
+                Status: <b>{STATUS_PT[viewRepair?.status] ?? "-"}</b> &nbsp;•&nbsp;
+                Recebida: <b>{viewRepair?.received_at ?? "-"}</b>
+              </p>
+
+              {viewRepair?.id && (
+                <form method="post" action={`/repairs/${viewRepair.id}`} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+                  <input type="hidden" name="_token" value={window.csrfToken} />
+                  <input type="hidden" name="_method" value="PUT"/>
+                  <label htmlFor="new_status" style={{ fontWeight: 600 }}>Status:</label>
+                  <select id="new_status" name="status" defaultValue={viewRepair.status} style={{ width: 136 }}>
+                    <option value="open">Pendente</option>
+                    <option value="in_progress">Em andamento</option>
+                    <option value="done">Concluído</option>
+                    <option value="canceled">Cancelado</option>
+                  </select>
+                  <button type="submit" className="btn primary"><VscSync style={{ fontSize: 24 }} /> Atualizar</button>
+                </form>
+              )}
+
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Dispositivo</th><th>Preço</th><th>Descrição</th><th>Criada em</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{viewRepair?.device ?? "-"}</td>
+                      <td>{viewRepair?.price != null ? BRL.format(Number(viewRepair.price || 0)) : "-"}</td>
+                      <td className="muted">{viewRepair?.issue || "-"}</td>
+                      <td className="muted">{viewRepair?.created_at ?? "-"}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="form__actions">
+                {viewRepair?.id && (
+                  <form method="post" action={`/repairs/${viewRepair.id}`} onSubmit={(e) => { if (!confirm("Tem certeza que deseja excluir esta manutenção?")) e.preventDefault(); }}>
+                    <input type="hidden" name="_token" value={window.csrfToken}/>
+                    <input type="hidden" name="_method" value="DELETE"/>
+                    <button type="submit" className="btn danger"><VscTrash style={{ fontSize: 24 }}/> Excluir</button>
+                  </form>
+                )}
+                <a href="#" className="btn">Fechar</a>
+              </div>
+            </>
+          )}
+        </Modal>
         {/* ======= /modal ======= */}
       </main>
     </div>

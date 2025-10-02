@@ -10,7 +10,6 @@
 </head>
 <body>
   <div id="header"></div>
-  <div id="welcome" data-user='@json(Auth::user())'></div>
   <div id="app"></div>
   <div id="footer"></div>
 

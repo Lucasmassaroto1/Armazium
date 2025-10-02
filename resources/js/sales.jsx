@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import "../css/home.css";
-import "../css/produtoModal.css";
 import { VscSave, VscSync, VscEye } from "react-icons/vsc";
+import Modal from "../js/components/Modal.jsx";
 
 const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const STATUS_PT = { open: "Pendente", paid: "Pago", canceled: "Cancelado" };
@@ -54,7 +54,7 @@ const RowsTable = React.memo(function RowsTable({ loading, rows, onShow, capped,
 
 function Sales() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [allRows, setAllRows] = useState([]); // lista completa da consulta
+  const [allRows, setAllRows] = useState([]); // lista completa
   const [rows, setRows] = useState([]);       // fatia visível
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -68,7 +68,7 @@ function Sales() {
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
 
-  // estado da criação
+  // criação
   const [status, setStatus] = useState("open");
   const [soldAt, setSoldAt] = useState(new Date().toISOString().slice(0, 10));
   const [clientId, setClientId] = useState("");
@@ -100,7 +100,6 @@ function Sales() {
     const m = new Map(); for (const p of products) m.set(String(p.id), p); return m;
   }, [products]);
   const productsIndex = useMemo(() => {
-    // indexa por nome e sku para lookup rápido
     const m = new Map();
     for(const p of products){
       const n = (p.name||"").trim().toLowerCase();
@@ -116,7 +115,6 @@ function Sales() {
   [allRows]);
 
   const applyVisibleSlice = useCallback((full) => {
-    // mostra até N linhas; se tiver mais, exibe botão "Mostrar mais"
     setAllRows(full);
     setRows(full.slice(0, visibleCount));
   }, [visibleCount]);
@@ -253,7 +251,6 @@ function Sales() {
     if(!q) { setClientId(""); setClientIdInput(""); return; }
     const exact = clientsByName.get(q);
     if(exact) { setClientId(String(exact.id)); setClientIdInput(String(exact.id)); return; }
-    // fallback contém
     for(const [k, c] of clientsByName.entries()){
       if(k.includes(q)) { setClientId(String(c.id)); setClientIdInput(String(c.id)); break; }
     }
@@ -272,44 +269,59 @@ function Sales() {
   const _setProductFromId = useCallback((index, idStr) => {
     const id = String(idStr || "").trim();
     setItem(index, "productIdInput", id);
-    if(!id){ setItem(index, "product_id", ""); setItem(index, "productNameInput", ""); return; }
+    if(!id){
+      setItem(index, "product_id", "");
+      setItem(index, "productNameInput", "");
+      return;
+    }
     const p = productsById.get(id);
     if(p){
-      setItem(index, "product_id", String(p.id));
-      setItem(index, "productNameInput", p.name || "");
-      if(p.sale_price != null) setItem(index, "unit_price", (prev => prev) ); // mantém se já digitou
+      setItems(prev => prev.map((it, i) => i === index ? {
+        ...it,
+        product_id: String(p.id),
+        productNameInput: p.name || "",
+        unit_price: it.unit_price ? it.unit_price : String(p.sale_price ?? "")
+      } : it));
     }
-  }, [productsById, setItem]);
+  }, [productsById, setItem, setItems]);
   const setProductFromId = useDebouncedFn(_setProductFromId, 120);
 
   const _setProductFromName = useCallback((index, nameStr) => {
     const raw = String(nameStr || "").trim(); const q = raw.toLowerCase();
     setItem(index, "productNameInput", raw);
     if(!q){ setItem(index, "product_id", ""); setItem(index, "productIdInput", ""); return; }
-    const exact = productsIndex.get(`n:${q}`) || productsIndex.get(`s:${q}`);
-    let p = exact;
+    let p = productsIndex.get(`n:${q}`) || productsIndex.get(`s:${q}`);
     if(!p){
       for(const [k, v] of productsIndex.entries()){
         if((k.startsWith("n:") || k.startsWith("s:")) && k.includes(q)) { p = v; break; }
       }
     }
     if(p){
-      setItem(index, "product_id", String(p.id));
-      setItem(index, "productIdInput", String(p.id));
-      setItem(index, "unit_price", (u => u || String(p.sale_price ?? "")));
+      setItems(prev => prev.map((it, i) => i === index ? {
+        ...it,
+        product_id: String(p.id),
+        productIdInput: String(p.id),
+        unit_price: it.unit_price ? it.unit_price : String(p.sale_price ?? "")
+      } : it));
     }
-  }, [productsIndex, setItem]);
+  }, [productsIndex, setItem, setItems]);
   const setProductFromName = useDebouncedFn(_setProductFromName, 120);
 
   const onChangeProduct = useCallback((index, productId) => {
-    setItem(index, "product_id", productId);
-    const p = productsById.get(String(productId));
+    const key = String(productId);
+    const p = productsById.get(key);
     if(p){
-      setItem(index, "productIdInput", String(p.id));
-      setItem(index, "productNameInput", p.name || "");
-      if(p.sale_price != null) setItem(index, "unit_price", String(p.sale_price));
+      setItems(prev => prev.map((it, i) => i === index ? {
+        ...it,
+        product_id: key,
+        productIdInput: String(p.id),
+        productNameInput: p.name || "",
+        unit_price: it.unit_price ? it.unit_price : String(p.sale_price ?? "")
+      } : it));
+    }else{
+      setItem(index, "product_id", productId);
     }
-  }, [productsById, setItem]);
+  }, [productsById, setItem, setItems]);
 
   /* --------- RENDER --------- */
   const capped = useMemo(() => allRows.length > rows.length, [allRows.length, rows.length]);
@@ -337,200 +349,187 @@ function Sales() {
           <RowsTable loading={loading} rows={rows} onShow={openModalDetalhes} capped={capped} onShowMore={onShowMore}/>
         </section>
 
-        {/* ======= Modal ======= */}
-        <section id="sale-modal" className="modal" aria-labelledby="titulo-venda" aria-modal="true" role="dialog">
-          <a href="#" className="modal__overlay" aria-label="Fechar"></a>
-          <div className="modal__panel">
-            <a className="modal__close" href="#" aria-label="Fechar">✕</a>
+        {/* ======= Modal unificado ======= */}
+        <Modal id="sale-modal" title={mode === "create" ? "Nova venda" : null}>
+          {mode === "create" ? (
+            <>
+              <p className="modal__desc">
+                O estoque fará a baixa dos produtos se a venda estiver como <b>Pago</b>.
+              </p>
 
-            {mode === "create" ? (
-              <>
-                <h2 id="titulo-venda" className="modal__title">Nova venda</h2>
-                <p className="modal__desc">O estoque fará a baixa dos produtos se a venda estiver como <b>Pago</b>.</p>
+              <form method="post" action="/sales">
+                <input type="hidden" name="_token" value={window.csrfToken} />
 
-                <form method="post" action="/sales">
-                  <input type="hidden" name="_token" value={window.csrfToken} />
-
-                  <div className="grid">
-                    <div className="field half">
-                      <label htmlFor="sold_at">Data da venda</label>
-                      <input id="sold_at" name="sold_at" type="date" value={soldAt} onChange={(e) => setSoldAt(e.target.value)} required/>
-                    </div>
-
-                    <div className="field half">
-                      <label htmlFor="status">Status</label>
-                      <select id="status" name="status" value={status} onChange={(e) => setStatus(e.target.value)}>
-                        <option value="open">Pendente</option>
-                        <option value="paid">Pago</option>
-                        <option value="canceled">Cancelado</option>
-                      </select>
-                    </div>
-
-                    {/* ===== CLIENTE (compartilha datalist global) ===== */}
-                    <div className="field" style={{ gridColumn: "span 12" }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8 }}>
-                        <div>
-                          <label htmlFor="client_id_input">Cliente (por ID)</label>
-                          <input id="client_id_input" type="number" min="1" placeholder="Ex.: 1" value={clientIdInput} onChange={(e) => setClientFromId(e.target.value)} onBlur={(e) => setClientFromId(e.target.value)}/>
-                        </div>
-                        <div>
-                          <label htmlFor="client_name_input">Cliente (por Nome)</label>
-                          <input id="client_name_input" type="text" placeholder="Ex.: Consumidor" list="clients-name-global" value={clientNameInput} onChange={(e) => setClientFromName(e.target.value)} onBlur={(e) => setClientFromName(e.target.value)}/>
-                        </div>
-                      </div>
-
-                      {/* campo real que vai no POST */}
-                      <input type="hidden" id="client_id" name="client_id" value={clientId} required />
-                      <span className="helper">Preencha por ID <b>ou</b> por Nome. O sistema sincroniza automaticamente.</span>
-                    </div>
-
-                    {/* ===== ITENS (sem select com 1000 opções por linha) ===== */}
-                    <div className="field" style={{ gridColumn: "span 12" }}>
-                      <label>Itens</label>
-                      <div className="table-wrap" style={{ maxHeight: 280, overflow: "auto" }}>
-                        <table>
-                          <thead>
-                            <tr>
-                              <th style={{ width: "45%" }}>Produto</th>
-                              <th style={{ width: "15%" }}>Qtd</th>
-                              <th style={{ width: "20%" }}>Preço unit.</th>
-                              <th style={{ width: "20%" }}>Subtotal</th>
-                              <th></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {items.map((it, idx) => {
-                              const p = productsById.get(String(it.product_id));
-                              const unit = parseFloat(it.unit_price || (p?.sale_price ?? 0)) || 0;
-                              const qty = parseInt(it.qty || "0", 10) || 0;
-                              const subtotal = unit * qty;
-
-                              return (
-                                <tr key={idx}>
-                                  <td>
-                                    <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 8 }}>
-                                      <input type="number" min="1" placeholder="ID" value={it.productIdInput} onChange={(e) => setProductFromId(idx, e.target.value)} onBlur={(e) => setProductFromId(idx, e.target.value)}/>
-                                      <div>
-                                        <input type="text" placeholder="Nome ou SKU" list="products-name-global" value={it.productNameInput} onChange={(e) => setProductFromName(idx, e.target.value)} onBlur={(e) => setProductFromName(idx, e.target.value)}/>
-                                      </div>
-                                    </div>
-
-                                    {/* valor real para o POST */}
-                                    <input type="hidden" name={`items[${idx}][product_id]`} value={it.product_id}/>
-                                  </td>
-
-                                  <td>
-                                    <input type="number" min="1" step="1" name={`items[${idx}][qty]`} value={it.qty} onChange={(e) => setItem(idx, "qty", e.target.value)} required/>
-                                  </td>
-
-                                  <td>
-                                    <input type="number" min="0" step="0.01" name={`items[${idx}][unit_price]`} value={it.unit_price} onChange={(e) => setItem(idx, "unit_price", e.target.value)} placeholder={p?.sale_price != null ? String(p.sale_price) : "0,00"}/>
-                                  </td>
-
-                                  <td className="right">{BRL.format(subtotal)}</td>
-
-                                  <td className="action">
-                                    {items.length > 1 && (
-                                      <button type="button" className="btn danger" onClick={() => removeItem(idx)}>Remover</button>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <div style={{ marginTop: 8 }}>
-                        <button type="button" className="btn" onClick={addItem}>+ Adicionar item</button>
-                      </div>
-                    </div>
+                <div className="grid">
+                  <div className="field half">
+                    <label htmlFor="sold_at">Data da venda</label>
+                    <input id="sold_at" name="sold_at" type="date" value={soldAt} onChange={(e) => setSoldAt(e.target.value)} required/>
                   </div>
 
-                  <div className="form__actions">
-                    <a href="#" className="btn">Cancelar</a>
-                    <button type="submit" className="btn primary"><VscSave size={24}/> Salvar</button>
-                  </div>
-                </form>
-
-                {/* DATALISTS GLOBAIS (renderizados UMA vez) */}
-                <datalist id="clients-name-global">
-                  {clients.slice(0, 1000).map(c => <option key={c.id} value={c.name} />)}
-                </datalist>
-                <datalist id="products-name-global">
-                  {products.slice(0, 1000).map(p => <option key={p.id} value={p.name} />)}
-                </datalist>
-              </>
-            ) : (
-              <>
-                <h2 className="modal__title">Detalhes da venda #{viewSale?.id ?? ""}</h2>
-                <p className="modal__desc">
-                  Cliente: <b>{viewSale?.client ?? "-"}</b> &nbsp;•&nbsp;
-                  Status: <b>{viewSale ? STATUS_PT[viewSale.status] ?? viewSale.status : "-"}</b> &nbsp;•&nbsp;
-                  Data: <b>{viewSale?.sold_at ?? "-"}</b>
-                </p>
-
-                {viewSale?.id && (
-                  <form method="post" action={`/sales/${viewSale.id}`} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
-                    <input type="hidden" name="_token" value={window.csrfToken}/>
-                    <input type="hidden" name="_method" value="PUT"/>
-                    <label htmlFor="new_status" style={{ fontWeight: 600 }}>status:</label>
-                    <select id="new_status" name="status" defaultValue={viewSale.status} style={{ width: 120 }}>
+                  <div className="field half">
+                    <label htmlFor="status">Status</label>
+                    <select id="status" name="status" value={status} onChange={(e) => setStatus(e.target.value)}>
                       <option value="open">Pendente</option>
                       <option value="paid">Pago</option>
                       <option value="canceled">Cancelado</option>
                     </select>
-                    <button type="submit" className="btn primary"><VscSync size={24}/> Atualizar</button>
-                  </form>
-                )}
+                  </div>
 
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Produto</th>
-                        <th>SKU</th>
-                        <th className="right">Qtd</th>
-                        <th className="right">Preço unit.</th>
-                        <th className="right">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {viewItems.length === 0 ? (
-                        <tr><td colSpan="5" className="muted">Sem itens.</td></tr>
-                      ) : viewItems.map((it, i) => (
-                        <tr key={i}>
-                          <td>{it.product}</td>
-                          <td className="muted">{it.sku}</td>
-                          <td className="right">{it.qty}</td>
-                          <td className="right">{BRL.format(Number(it.unit_price || 0))}</td>
-                          <td className="right">{BRL.format(Number(it.subtotal || 0))}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td colSpan="4" className="right"><b>Total</b></td>
-                        <td className="right"><b>{BRL.format(Number(viewSale?.total || 0))}</b></td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                  {/* ===== CLIENTE ===== */}
+                  <div className="field" style={{ gridColumn: "span 12" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 8 }}>
+                      <div>
+                        <label htmlFor="client_id_input">Cliente (por ID)</label>
+                        <input id="client_id_input" type="number" min="1" placeholder="Ex.: 1" value={clientIdInput} onChange={(e) => setClientFromId(e.target.value)} onBlur={(e) => setClientFromId(e.target.value)}/>
+                      </div>
+                      <div>
+                        <label htmlFor="client_name_input">Cliente (por Nome)</label>
+                        <input id="client_name_input" type="text" placeholder="Ex.: Consumidor" list="clients-name-global" value={clientNameInput} onChange={(e) => setClientFromName(e.target.value)} onBlur={(e) => setClientFromName(e.target.value)}/>
+                      </div>
+                    </div>
+                    <input type="hidden" id="client_id" name="client_id" value={clientId} required />
+                    <span className="helper">Preencha por ID <b>ou</b> por Nome. O sistema sincroniza automaticamente.</span>
+                  </div>
+
+                  {/* ===== ITENS ===== */}
+                  <div className="field" style={{ gridColumn: "span 12" }}>
+                    <label>Itens</label>
+                    <div className="table-wrap" style={{ maxHeight: 280, overflow: "auto" }}>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style={{ width: "45%" }}>Produto</th>
+                            <th style={{ width: "15%" }}>Qtd</th>
+                            <th style={{ width: "20%" }}>Preço unit.</th>
+                            <th style={{ width: "20%" }}>Subtotal</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((it, idx) => {
+                            const p = productsById.get(String(it.product_id));
+                            const unit = parseFloat(it.unit_price || (p?.sale_price ?? 0)) || 0;
+                            const qty = parseInt(it.qty || "0", 10) || 0;
+                            const subtotal = unit * qty;
+
+                            return (
+                              <tr key={idx}>
+                                <td>
+                                  <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 8 }}>
+                                    <input type="number" min="1" placeholder="ID" value={it.productIdInput} onChange={(e) => setProductFromId(idx, e.target.value)} onBlur={(e) => setProductFromId(idx, e.target.value)}/>
+                                    <div>
+                                      <input type="text" placeholder="Nome ou SKU" list="products-name-global" value={it.productNameInput} onChange={(e) => setProductFromName(idx, e.target.value)} onBlur={(e) => setProductFromName(idx, e.target.value)}/>
+                                    </div>
+                                  </div>
+                                  <input type="hidden" name={`items[${idx}][product_id]`} value={it.product_id}/>
+                                </td>
+
+                                <td><input type="number" min="1" step="1" name={`items[${idx}][qty]`} value={it.qty} onChange={(e) => setItem(idx, "qty", e.target.value)} required/></td>
+
+                                <td><input type="number" min="0" step="0.01" name={`items[${idx}][unit_price]`} value={it.unit_price} onChange={(e) => setItem(idx, "unit_price", e.target.value)} placeholder={p?.sale_price != null ? String(p.sale_price) : "0,00"}/></td>
+
+                                <td className="right">{BRL.format(subtotal)}</td>
+
+                                <td className="action">
+                                  {items.length > 1 && (
+                                    <button type="button" className="btn danger" onClick={() => removeItem(idx)}>Remover</button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div style={{ marginTop: 8 }}>
+                      <button type="button" className="btn" onClick={addItem}>+ Adicionar item</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="form__actions">
-                  {viewSale?.id && (
-                    <form method="post" action={`/sales/${viewSale.id}`} onSubmit={(e) => { if (!confirm("Tem certeza que deseja excluir esta venda?")) e.preventDefault(); }}>
-                      <input type="hidden" name="_token" value={window.csrfToken}/>
-                      <input type="hidden" name="_method" value="DELETE"/>
-                      <button type="submit" className="btn danger"><VscSave size={24}/> Excluir</button>
-                    </form>
-                  )}
-                  <a href="#" className="btn">Fechar</a>
+                  <a href="#" className="btn">Cancelar</a>
+                  <button type="submit" className="btn primary"><VscSave size={24}/> Salvar</button>
                 </div>
-              </>
-            )}
-          </div>
-        </section>
+              </form>
+
+              {/* DATALISTS GLOBAIS */}
+              <datalist id="clients-name-global">
+                {clients.slice(0, 1000).map(c => <option key={c.id} value={c.name} />)}
+              </datalist>
+              <datalist id="products-name-global">
+                {products.slice(0, 1000).map(p => <option key={p.id} value={p.name} />)}
+              </datalist>
+            </>
+          ) : (
+            <>
+              <h2 id="sale-modal-title" className="modal__title">
+                Detalhes da venda #{viewSale?.id ?? ""}
+              </h2>
+              <p className="modal__desc">
+                Cliente: <b>{viewSale?.client ?? "-"}</b> &nbsp;•&nbsp;
+                Status: <b>{viewSale ? STATUS_PT[viewSale.status] ?? viewSale.status : "-"}</b> &nbsp;•&nbsp;
+                Data: <b>{viewSale?.sold_at ?? "-"}</b>
+              </p>
+
+              {viewSale?.id && (
+                <form method="post" action={`/sales/${viewSale.id}`} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+                  <input type="hidden" name="_token" value={window.csrfToken}/>
+                  <input type="hidden" name="_method" value="PUT"/>
+                  <label htmlFor="new_status" style={{ fontWeight: 600 }}>status:</label>
+                  <select id="new_status" name="status" defaultValue={viewSale.status} style={{ width: 120 }}>
+                    <option value="open">Pendente</option>
+                    <option value="paid">Pago</option>
+                    <option value="canceled">Cancelado</option>
+                  </select>
+                  <button type="submit" className="btn primary"><VscSync size={24}/> Atualizar</button>
+                </form>
+              )}
+
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Produto</th><th>SKU</th><th className="right">Qtd</th>
+                      <th className="right">Preço unit.</th><th className="right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewItems.length === 0 ? (
+                      <tr><td colSpan="5" className="muted">Sem itens.</td></tr>
+                    ) : viewItems.map((it, i) => (
+                      <tr key={i}>
+                        <td>{it.product}</td>
+                        <td className="muted">{it.sku}</td>
+                        <td className="right">{it.qty}</td>
+                        <td className="right">{BRL.format(Number(it.unit_price || 0))}</td>
+                        <td className="right">{BRL.format(Number(it.subtotal || 0))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan="4" className="right"><b>Total</b></td>
+                      <td className="right"><b>{BRL.format(Number(viewSale?.total || 0))}</b></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div className="form__actions">
+                {viewSale?.id && (
+                  <form method="post" action={`/sales/${viewSale.id}`} onSubmit={(e) => { if (!confirm("Tem certeza que deseja excluir esta venda?")) e.preventDefault(); }}>
+                    <input type="hidden" name="_token" value={window.csrfToken}/>
+                    <input type="hidden" name="_method" value="DELETE"/>
+                    <button type="submit" className="btn danger"><VscSave size={24}/> Excluir</button>
+                  </form>
+                )}
+                <a href="#" className="btn">Fechar</a>
+              </div>
+            </>
+          )}
+        </Modal>
         {/* ======= /modal ======= */}
       </main>
     </div>
