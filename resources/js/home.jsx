@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import "../css/home.css";
 import { VscEye } from "react-icons/vsc";
 import { BsBoxSeam, BsCartCheck } from "react-icons/bs";
-import { FaTools } from "react-icons/fa";
+import { FaTools, FaDollarSign } from "react-icons/fa";
 
 const cx = (...c) => c.filter(Boolean).join(" ");
 const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -23,10 +23,10 @@ const StatCard = React.memo(function StatCard({ label, value, loading, successWh
   );
 });
 
-const MoneyCard = React.memo(function MoneyCard({ label, value, loading }){
+const MoneyCard = React.memo(function MoneyCard({ label, value, loading, Icon }){
   return(
     <div className={cx("card", (!loading && value > 0) ? "success" : "danger")}>
-      <div className="card-label">{label}</div>
+      <div className="card-label">{Icon ? <Icon style={{ fontSize: 20 }} aria-hidden/> : null}<span>{label}</span></div>
       <div className="card-value">{loading ? "..." : BRL.format(Number(value || 0))}</div>
     </div>
   );
@@ -143,11 +143,11 @@ function Home(){
         {error && <div className="alert">{error}</div>}
 
         <section className="grid-cards">
-          <StatCard Icon={BsCartCheck} label=" Vendas (hoje)" value={metrics.salesToday} loading={loading} successWhen={(v) => v > 0} link={{ href: "/sales?f=low", text: "Detalhes" }}/>
+          <StatCard Icon={BsCartCheck} label="Vendas (hoje)" value={metrics.salesToday} loading={loading} successWhen={(v) => v > 0} link={{ href: "/sales?f=low", text: "Detalhes" }}/>
 
-          <StatCard Icon={FaTools} label=" Manutenções (hoje)" value={metrics.repairsToday} loading={loading} successWhen={(v) => v > 0} link={{ href: "/repairs?f=low", text: "Detalhes" }}/>
+          <StatCard Icon={FaTools} label="Manutenções (hoje)" value={metrics.repairsToday} loading={loading} successWhen={(v) => v > 0} link={{ href: "/repairs?f=low", text: "Detalhes" }}/>
 
-          <MoneyCard label="Faturado (hoje)" value={metrics.revenueToday} loading={loading}/>
+          <MoneyCard Icon={FaDollarSign} label="Faturado (hoje)" value={metrics.revenueToday} loading={loading}/>
 
           <div className={cx("card", (!loading && lowStockCount > 0) ? "danger" : "")}>
             <div className="card-label"><BsBoxSeam style={{ fontSize: 20 }}/> Produtos com baixo estoque</div>
